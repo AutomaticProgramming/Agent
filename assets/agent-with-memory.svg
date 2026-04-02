@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 680" font-family="system-ui, sans-serif" font-size="13">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#475569"/>
+    </marker>
+    <marker id="ab" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#3b82f6"/>
+    </marker>
+    <marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#22c55e"/>
+    </marker>
+    <marker id="ao" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#f59e0b"/>
+    </marker>
+    <marker id="ap" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="6" orient="auto">
+      <path d="M 0 1 L 9 5 L 0 9 z" fill="#ec4899"/>
+    </marker>
+    <filter id="s" x="-3%" y="-3%" width="106%" height="106%">
+      <feDropShadow dx="1" dy="2" stdDeviation="2" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <text x="360" y="32" text-anchor="middle" font-weight="700" font-size="15" fill="#1e293b">Agent 主循环（带记忆版）</text>
+
+  <!-- User -->
+  <rect x="20" y="60" width="120" height="46" rx="8" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5" filter="url(#s)"/>
+  <text x="80" y="88" text-anchor="middle" font-weight="600" fill="#1d4ed8">用 户</text>
+
+  <!-- LLM -->
+  <rect x="470" y="270" width="130" height="46" rx="8" fill="#f3e8ff" stroke="#a855f7" stroke-width="1.5" filter="url(#s)"/>
+  <text x="535" y="298" text-anchor="middle" font-weight="600" fill="#7c3aed">LLM</text>
+
+  <!-- messages -->
+  <rect x="210" y="270" width="130" height="46" rx="8" fill="#fefce8" stroke="#ca8a04" stroke-width="1.5" filter="url(#s)"/>
+  <text x="275" y="290" text-anchor="middle" font-weight="600" fill="#a16207">messages</text>
+  <text x="275" y="306" text-anchor="middle" fill="#a16207" font-size="11">（短期记忆）</text>
+
+  <!-- Tools box -->
+  <rect x="180" y="450" width="320" height="55" rx="10" fill="#f0fdf4" stroke="#22c55e" stroke-width="1.5" filter="url(#s)"/>
+  <text x="340" y="472" text-anchor="middle" font-weight="600" fill="#166534">工 具 层</text>
+  <text x="340" y="492" text-anchor="middle" fill="#15803d" font-size="11">execute_bash · read_file · write_file</text>
+
+  <!-- Memory tools box -->
+  <rect x="520" y="450" width="160" height="55" rx="10" fill="#fff7ed" stroke="#f97316" stroke-width="1.5" filter="url(#s)"/>
+  <text x="600" y="472" text-anchor="middle" font-weight="600" fill="#c2410c">记 忆 工 具</text>
+  <text x="600" y="492" text-anchor="middle" fill="#c2410c" font-size="11">save_memory · search_memory</text>
+
+  <!-- long_term.json -->
+  <rect x="520" y="560" width="160" height="60" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="6,4" filter="url(#s)"/>
+  <text x="600" y="582" text-anchor="middle" font-weight="600" fill="#6d28d9">long_term.json</text>
+  <text x="600" y="602" text-anchor="middle" fill="#7c3aed" font-size="11">（长期记忆 · 持久化文件）</text>
+
+  <!-- summarize_memory -->
+  <rect x="210" y="380" width="130" height="40" rx="8" fill="#f0fdfa" stroke="#14b8a6" stroke-width="1.5" filter="url(#s)"/>
+  <text x="275" y="398" text-anchor="middle" font-weight="600" fill="#0f766e" font-size="11">summarize_memory</text>
+  <text x="275" y="413" text-anchor="middle" fill="#0f766e" font-size="10">(消息过多时压缩)</text>
+
+  <!-- MemoryManager -->
+  <rect x="520" y="160" width="160" height="70" rx="10" fill="#fff1f2" stroke="#fb7185" stroke-width="1.5" filter="url(#s)"/>
+  <text x="600" y="185" text-anchor="middle" font-weight="700" fill="#9f1239" font-size="13">MemoryManager</text>
+  <text x="600" y="205" text-anchor="middle" fill="#be123c" font-size="11">save / search / summarize</text>
+
+  <!-- arrows -->
+  <line x1="140" y1="83" x2="210" y2="282" stroke="#475569" stroke-width="1.5" marker-end="url(#ar)" stroke-dasharray="4,3"/>
+  <text x="155" y="185" fill="#475569" font-size="10">用户消息</text>
+
+  <line x1="340" y1="293" x2="470" y2="293" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+  <text x="405" y="284" text-anchor="middle" fill="#3b82f6" font-size="10">发送 messages</text>
+
+  <line x1="470" y1="307" x2="340" y2="307" stroke="#3b82f6" stroke-width="1.5" marker-end="url(#ab)"/>
+  <text x="405" y="322" text-anchor="middle" fill="#3b82f6" font-size="10">回复 + tool_calls</text>
+
+  <line x1="260" y1="316" x2="290" y2="450" stroke="#475569" stroke-width="1.5" marker-end="url(#ar)"/>
+  <text x="255" y="390" fill="#475569" font-size="10">执行工具</text>
+
+  <line x1="370" y1="450" x2="300" y2="316" stroke="#475569" stroke-width="1.5" marker-end="url(#ar)"/>
+  <text x="400" y="390" fill="#475569" font-size="10">工具结果</text>
+
+  <line x1="520" y1="195" x2="340" y2="282" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#ar)"/>
+  <text x="420" y="230" fill="#fb7185" font-size="10">注入长期记忆到system prompt</text>
+
+  <line x1="560" y1="450" x2="340" y2="316" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#ao)"/>
+  <text x="480" y="390" fill="#f59e0b" font-size="10">记忆操作</text>
+
+  <line x1="275" y1="316" x2="275" y2="380" stroke="#475569" stroke-width="1.5" marker-end="url(#ar)" stroke-dasharray="4,3"/>
+  <text x="265" y="355" fill="#475569" font-size="10">过长</text>
+
+  <line x1="240" y1="380" x2="220" y2="316" stroke="#14b8a6" stroke-width="1.5" marker-end="url(#ar)"/>
+  <text x="210" y="355" fill="#14b8a6" font-size="10">压缩</text>
+
+  <line x1="600" y1="505" x2="600" y2="560" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#ar)"/>
+  <text x="620" y="540" fill="#7c3aed" font-size="10">持久化</text>
+
+  <!-- annotation -->
+  <rect x="20" y="635" width="660" height="36" rx="6" fill="#f0fdf4" stroke="#4ade80" stroke-width="1"/>
+  <text x="330" y="650" text-anchor="middle" fill="#166534" font-weight="600" font-size="11">短期记忆(messages) + 长期记忆(long_term.json) = 跨会话不丢失</text>
+  <text x="330" y="665" text-anchor="middle" fill="#166534" font-size="10">messages过多时自动压缩 | 重要信息持久化 | 启动时注入长期记忆到system prompt</text>
+</svg>
