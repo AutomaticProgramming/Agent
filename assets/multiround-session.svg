@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 620" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#555"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2d7d46"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="620" rx="12" fill="#fafbfc"/>
+
+  <!-- Title -->
+  <text x="400" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#1a1a2e">多轮对话全流程</text>
+
+  <!-- Start node -->
+  <rect x="270" y="55" width="260" height="48" rx="24" fill="#4a90d9" stroke="#3a7bc8" stroke-width="1.5"/>
+  <text x="400" y="77" text-anchor="middle" font-size="13" fill="#fff" font-weight="600">启动 session</text>
+  <text x="400" y="95" text-anchor="middle" font-size="11" fill="#d6e8ff">self.messages = []</text>
+
+  <!-- Arrow 1 -->
+  <line x1="400" y1="103" x2="400" y2="135" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- User input node -->
+  <rect x="230" y="135" width="340" height="64" rx="12" fill="#fff" stroke="#4a90d9" stroke-width="2" stroke-dasharray="6,3"/>
+  <text x="400" y="159" text-anchor="middle" font-size="13" fill="#333" font-weight="600">用户输入："帮我看看文件"</text>
+  <text x="400" y="178" text-anchor="middle" font-size="12" fill="#555">session.step(user_input)</text>
+  <text x="400" y="194" text-anchor="middle" font-size="11" fill="#888">（进入一次单轮 agent 循环）</text>
+
+  <!-- Arrow 2 -->
+  <line x1="400" y1="199" x2="400" y2="235" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- _ensure_system_prompt -->
+  <rect x="190" y="235" width="420" height="70" rx="10" fill="#f0f7ff" stroke="#4a90d9" stroke-width="1.5"/>
+  <text x="400" y="257" text-anchor="middle" font-size="13" fill="#333" font-weight="600">_ensure_system_prompt()</text>
+  <text x="400" y="276" text-anchor="middle" font-size="12" fill="#555">首次：写入 system prompt（含长期记忆注入）</text>
+  <text x="400" y="295" text-anchor="middle" font-size="12" fill="#555">消息 &gt; 15 条：LLM 自动摘要压缩</text>
+
+  <!-- Arrow 3 -->
+  <line x1="400" y1="305" x2="400" y2="335" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- Append user message -->
+  <rect x="230" y="335" width="340" height="44" rx="10" fill="#f5f0ff" stroke="#8b6cc1" stroke-width="1.5"/>
+  <text x="400" y="362" text-anchor="middle" font-size="13" fill="#333" font-weight="600">append user message 到 self.messages</text>
+
+  <!-- Arrow 4 -->
+  <line x1="400" y1="379" x2="400" y2="410" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- LLM call block -->
+  <rect x="170" y="410" width="460" height="120" rx="10" fill="#fff8f0" stroke="#e08830" stroke-width="1.5"/>
+  <text x="400" y="433" text-anchor="middle" font-size="13" fill="#333" font-weight="600">LLM 调用</text>
+
+  <!-- Branch -->
+  <text x="280" y="460" text-anchor="middle" font-size="12" fill="#555">有 tool_calls？</text>
+
+  <!-- Yes branch -->
+  <line x1="310" y1="468" x2="470" y2="468" stroke="#555" stroke-width="1.5"/>
+  <line x1="470" y1="468" x2="470" y2="440" stroke="#555" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <text x="390" y="465" text-anchor="middle" font-size="11" fill="#2d7d46" font-weight="600">是</text>
+  <rect x="440" y="415" width="175" height="36" rx="8" fill="#e8f5e9" stroke="#2d7d46" stroke-width="1"/>
+  <text x="527" y="437" text-anchor="middle" font-size="11" fill="#2d7d46">执行工具 → 结果写回 messages</text>
+  <!-- Loop back arrow -->
+  <path d="M 527 415  L 527 405" stroke="#555" stroke-width="1.2" stroke-dasharray="4,3"/>
+
+  <!-- No branch -->
+  <text x="280" y="500" text-anchor="middle" font-size="11" fill="#c0392b" font-weight="600">否</text>
+  <line x1="280" y1="473" x2="280" y2="492" stroke="#555" stroke-width="1.5"/>
+  <rect x="185" y="490" width="190" height="32" rx="8" fill="#ffeaea" stroke="#c0392b" stroke-width="1"/>
+  <text x="280" y="511" text-anchor="middle" font-size="11" fill="#c0392b">return message.content</text>
+
+  <!-- Arrow 5 -->
+  <line x1="280" y1="522" x2="280" y2="555" stroke="#2d7d46" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow-green)"/>
+
+  <!-- Keep messages note -->
+  <rect x="100" y="555" width="360" height="36" rx="8" fill="#e8f5e9" stroke="#2d7d46" stroke-width="1.5"/>
+  <text x="280" y="578" text-anchor="middle" font-size="12" fill="#2d7d46" font-weight="600">self.messages 不销毁 → 等待下一轮 step()</text>
+
+  <!-- Arrow 6 back to user -->
+  <path d="M 100 573 L 55 573 L 55 167 L 230 167" stroke="#888" stroke-width="1.2" stroke-dasharray="5,4" marker-end="url(#arrow)" fill="none"/>
+  <text x="45" y="370" text-anchor="middle" font-size="10" fill="#888" transform="rotate(-90, 45, 370)">打印回答 → 等下一轮输入 → 循环</text>
+</svg>
