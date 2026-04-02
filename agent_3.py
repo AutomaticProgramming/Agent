@@ -5,8 +5,9 @@ from datetime import datetime
 from openai import OpenAI
 
 """
-    agent_2.py: 在 agent_1.py 基础上添加短期记忆和长期记忆系统
+    agent_3.py: 在 agent_2.py 基础上增加多轮对话能力
 
+    多轮对话: AgentSession 类跨轮次维护 messages 历史，支持 REPL 交互
     短期记忆: 当前会话的 messages 列表，超过阈值自动 LLM 摘要压缩
     长期记忆: 跨会话持久化的 key-value 条目，存储在 ./memory/long_term.json
 """
@@ -184,7 +185,7 @@ class MemoryManager:
         """返回全部长期记忆条目（用于注入 system prompt）。"""
         return self.memories
 
-    def summarize(self, messages, client, model="deepseek-chat"):
+    def summarize(self, messages, client, model="DeepSeek-V3.2"):
         """
         短期记忆摘要压缩：
         将 messages[1:]（跳过 system prompt）发给 LLM，要求生成一段简短摘要，
@@ -247,91 +248,102 @@ MEMORY RULES:
 4. Keep responses concise."""
 
 
-def run_agent(user_message, max_iterations=10):
+class AgentSession:
+    """维护一次多轮对话的完整历史。
+    每次 step() 追加一条用户消息，执行 agent 循环，返回最终回答。
     """
-    带记忆系统的 Agent 主循环。
 
-    短期记忆: messages 列表，超过 SHORT_MEMORY_LIMIT 条时自动摘要压缩
-    长期记忆: MemoryManager 管理的持久化 key-value 存储
+    def __init__(self, memory_manager: MemoryManager):
+        self.memory = memory_manager
+        self.messages: list[dict] = []
+        self._initialized = False
 
-    Args:
-        user_message: 用户的任务描述
-        max_iterations: Agent 最多与 LLM 交互的轮数
-
-    Returns:
-        模型最终回答文本
-    """
-    # 加载长期记忆并构造 system prompt
-    knowledge = memory.get_all()
-    system_prompt = _make_system_prompt(knowledge)
-
-    # 构造对话上下文（短期记忆起点）
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_message},
-    ]
-
-    for i in range(max_iterations):
-        # 短期记忆检查：消息过多时自动摘要压缩
-        if len(messages) > SHORT_MEMORY_LIMIT:
-            print(f"[Memory] Summarizing {len(messages)} messages...")
-            messages = memory.summarize(messages, client)
-
-        # 请求 LLM
-        response = client.chat.completions.create(
-            model=os.environ.get("OPENAI_MODEL", "deepseek-chat"),
-            messages=messages,
-            tools=tools,
-        )
-        message = response.choices[0].message
-        messages.append(message)
-
-        # 没有工具调用 → LLM 给出最终答案
-        if not message.tool_calls:
-            return message.content
-
-        # 处理工具调用
-        for tool_call in message.tool_calls:
-            name = tool_call.function.name
-            args = json.loads(tool_call.function.arguments)
-            print(f"[Tool] {name}({args})")
-
-            if name == "save_memory":
-                # 保存长期记忆
-                result = memory.save(args["key"], args["value"])
-            elif name == "search_memory":
-                # 搜索长期记忆
-                matches = memory.search(args["query"])
-                if matches:
-                    result = json.dumps(matches, ensure_ascii=False)
-                else:
-                    result = "No matching memories found."
-            elif name == "summarize_memory":
-                # 手动触发摘要压缩
-                messages = memory.summarize(messages, client)
-                result = "Conversation history summarized."
-            elif name in functions:
-                # 原有工具调用
-                result = functions[name](**args)
-            else:
-                result = f"Error: Unknown tool '{name}'"
-
-            # 将工具执行结果追加到消息历史
-            messages.append({
-                "role": "tool",
-                "tool_call_id": tool_call.id,
-                "content": str(result),
+    def _ensure_system_prompt(self):
+        """仅在 session 首次调用时设置 system prompt，并检查是否需要压缩。"""
+        if not self._initialized:
+            knowledge = self.memory.get_all()
+            self.messages.append({
+                "role": "system",
+                "content": _make_system_prompt(knowledge),
             })
+            self._initialized = True
 
-    return "Max iterations reached"
+        # 消息过多时提前压缩残留历史
+        if len(self.messages) > SHORT_MEMORY_LIMIT:
+            print(f"[Memory] Summarizing {len(self.messages)} messages...")
+            self.messages = self.memory.summarize(self.messages, client)
+
+    def step(self, user_message: str, max_iterations: int = 10) -> str:
+        """添加用户消息 → 执行 agent 循环 → 返回最终回答。"""
+        self._ensure_system_prompt()
+        self.messages.append({"role": "user", "content": user_message})
+
+        for i in range(max_iterations):
+            # 请求 LLM
+            response = client.chat.completions.create(
+                model=os.environ.get("OPENAI_MODEL", "DeepSeek-V3.2"),
+                messages=self.messages,
+                tools=tools,
+            )
+            message = response.choices[0].message
+            self.messages.append(message)
+
+            # 没有工具调用 → LLM 给出最终回答
+            if not message.tool_calls:
+                return message.content
+
+            # 处理工具调用
+            for tool_call in message.tool_calls:
+                name = tool_call.function.name
+                args = json.loads(tool_call.function.arguments)
+                print(f"[Tool] {name}({args})")
+
+                if name == "save_memory":
+                    result = self.memory.save(args["key"], args["value"])
+                elif name == "search_memory":
+                    matches = self.memory.search(args["query"])
+                    if matches:
+                        result = json.dumps(matches, ensure_ascii=False)
+                    else:
+                        result = "No matching memories found."
+                elif name == "summarize_memory":
+                    self.messages = self.memory.summarize(self.messages, client)
+                    result = "Conversation history summarized."
+                elif name in functions:
+                    result = functions[name](**args)
+                else:
+                    result = f"Error: Unknown tool '{name}'"
+
+                # 追加工具执行结果
+                self.messages.append({
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": str(result),
+                })
+
+        return "Max iterations reached"
 
 
 if __name__ == "__main__":
     import sys
 
-    # 从命令行参数拼接任务描述
-    # 用法: python agent_2.py "读取 agent.py 内容，保存到 result.txt"
-    # task = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else "Hello"
-    task = "帮我制定一份清明节黄山出游计划，并以markdown格式保存到trip.md文件中，要求：1. 文章结构：整体结论 + 分段展开 2. 语言风格：通俗易懂"
-    # task = "我喜欢徒步，喜欢拍照和美食"
-    print(run_agent(task))
+    session = AgentSession(memory)
+
+    # 从命令行参数获取初始任务
+    task = " ".join(sys.argv[1:]) if len(sys.argv) > 1 else None
+
+    if task:
+        print(session.step(task))
+
+    # 交互式多轮对话（REPL）
+    while True:
+        try:
+            user_input = input("\n> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            break
+        if user_input in ("quit", "exit"):
+            break
+        if not user_input:
+            continue
+        print(session.step(user_input))
